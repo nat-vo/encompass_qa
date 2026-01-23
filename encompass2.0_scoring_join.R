@@ -36,12 +36,9 @@ encompass_joined <- encompass %>%
   left_join(wpp_scores,        by = c("ein_rollup" = "ein")) %>%
   left_join(leadership_scores, by = c("ein_rollup" = "ein")) %>%
   left_join(measurement_scores,by = c("ein_rollup" = "ein")) %>%
-  left_join(cf_scores,         by = c("ein_rollup" = "ein"))
+  left_join(learning_scores,         by = c("ein_rollup" = "ein"))
 
 
-
-
-#join leadership, feedback, measurement to encompass sheet
 
 write.csv(leadership_cleaned, file = "leadership_cleaned_5jan2026.csv", row.names = FALSE)
 

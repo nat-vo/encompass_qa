@@ -60,21 +60,47 @@ program_planning_scores <- read_csv("mo_coded_2026-01-12.csv") %>%
     # =============================================================
     # Monitoring and Evaluation Practices (SMALL+)
     # =============================================================
-    is_eligible_me_practices = size %in% c("SMALL", "MEDIUM", "LARGE", "SUPER"),
-    me_practices_score = if_else(
-      is_eligible_me_practices,
-      rowSums(
-        across(
-          c(
-            plan_tracks_toc_activities,
-            plan_tracks_toc_outcomes,
-            plan_tracks_toc_timeline,
-            plan_tracks_toc_mission
-          ),
-          as.numeric
+      is_eligible_me_practices = size %in% c("SMALL", "MEDIUM", "LARGE", "SUPER"),
+      
+      me_practices_score = if_else(
+        is_eligible_me_practices,
+        case_when(
+          size == "SMALL" ~ rowSums(
+            across(
+              c(plan_tracks_toc_activities,
+                plan_tracks_toc_outcomes,
+                plan_tracks_toc_timeline,
+                plan_tracks_toc_mission),
+              ~ as.numeric(.x)
+            ),
+            na.rm = TRUE
+          ) / 4,
+          
+          size %in% c("MEDIUM", "LARGE", "SUPER") ~ rowSums(
+            across(
+              c(plan_tracks_toc_activities,
+                plan_tracks_toc_outcomes,
+                plan_tracks_toc_timeline,
+                plan_tracks_toc_mission,
+                dev_similarorgs_yes),
+              ~ as.numeric(.x)
+            ),
+            na.rm = TRUE
+          ) / 5
         ),
-        na.rm = TRUE
-      ) / 4,
+        NA_real_
+      ),
+    
+    # ==============================================================
+    # Reports Results to Stakeholders (MEDIUM+)
+    # ==============================================================
+    is_eligible_dev_similarorgs =
+      size %in% c("MEDIUM", "LARGE", "SUPER"),
+    
+    dev_similarorgs_score = if_else(
+      is_eligible_dev_similarorgs,
+      ifelse(dev_similarorgs_yes == 1, 1,
+             ifelse(dev_similarorgs_no == 1, 0, NA)),
       NA_real_
     ),
     

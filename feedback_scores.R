@@ -32,7 +32,7 @@ cf_submissions <- cf_submissions %>%
 # ------------------------------------------------------------
 cf_scores <- cf_submissions %>%
   
-  # ----------------------------------------------------------
+# ----------------------------------------------------------
 # Q1: Feedback Collection
 # ----------------------------------------------------------
 mutate(
@@ -133,11 +133,4 @@ cf_scores <- cf_scores %>%
     feedback_collection_score,
     is_eligible_feedback_practices,
     feedback_practices_score
-  )
-
-
-cf_scores %>%
-  summarise(
-    avg_feedback_collection_score  = mean(feedback_collection_score, na.rm = TRUE),
-    avg_feedback_practices_score   = mean(feedback_practices_score,  na.rm = TRUE)
   )
