@@ -1,5 +1,3 @@
-
-
 # Connect to the redshift database
 drv <- RPostgres::Postgres()
 con <- dbConnect(drv, 
@@ -15,7 +13,7 @@ con <- dbConnect(drv,
 query <- "
   SELECT *
   FROM t_constituent_feedback_submissions
-  WHERE archived_at IS NULL;
+  WHERE archived_at IS NULL AND submitted_at > DATE '2022-04-07';
 "
 
 cf_submissions <- dbGetQuery(con, query)
@@ -127,8 +125,10 @@ cf_scores <- cf_scores %>%
 # Keep only final outputs
 # ------------------------------------------------------------
 cf_scores <- cf_scores %>%
+  rename(ein_rollup = ein) %>%
+  mutate(ein_rollup = as.integer(ein_rollup)) %>%
   dplyr::select(
-    ein,
+    ein_rollup,
     is_eligible_feedback_collection,
     feedback_collection_score,
     is_eligible_feedback_practices,

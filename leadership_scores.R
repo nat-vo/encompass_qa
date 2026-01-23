@@ -1,6 +1,3 @@
-# Set working directory
-setwd("/Users/natalievolin/Library/CloudStorage/GoogleDrive-nvolin@charitynavigator.org/Shared drives/Encompass Rating /Beacon | Impact & Measurement/2 | Ratings/2.1 | Ratings Production/R code for ratings production/4. Other R code/Encompass2.0_scoring")
-
 # Load required libraries
 library(tidyr)
 library(readr)
