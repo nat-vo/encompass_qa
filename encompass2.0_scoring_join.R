@@ -8,14 +8,15 @@ library(RPostgres)
 library(DBI)
 library(dplyr)
 
-# Connect to the redshift database
-drv <- RPostgres::Postgres()
-con <- dbConnect(drv, 
-                 dbname = "prod", 
-                 host = "cn-ratings-public-replica-db.cidpyj9wyffz.us-east-1.rds.amazonaws.com", 
-                 port = 5432, 
-                 user = "programs_team", 
-                 password = "LG83EGYNM288N4bTrqhK")
+# Connect to the prod database
+con <- dbConnect(
+  RPostgres::Postgres(),
+  dbname   = Sys.getenv("Postgresql_DBNAME"),
+  host     = Sys.getenv("Postgresql_HOST"),
+  port     = Sys.getenv("Postgresql_PORT"),
+  user     = Sys.getenv("Postgresql_USER"),
+  password = Sys.getenv("Postgresql_PASSWORD")
+)
 query <- "
   SELECT ein_rollup, encompass_version, encompass_score_total,
          fa_score_total_display, ir_score_total_display, cc_score_total_display, la_score_total_display,

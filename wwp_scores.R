@@ -6,13 +6,14 @@ library(DBI)
 library(dplyr)
 
 # Connect to the redshift database
-drv <- RPostgres::Postgres()
-con <- dbConnect(drv, 
-                 dbname = "ratings", 
-                 host = "cn-analytics.ceatkmfl82x5.us-east-1.redshift.amazonaws.com", 
-                 port = 5439, 
-                 user = "programs_team", 
-                 password = "LG83EGYNM288N4bTrqhK")
+con <- dbConnect(
+  RPostgres::Postgres(),
+  dbname   = Sys.getenv("REDSHIFT_DBNAME"),
+  host     = Sys.getenv("REDSHIFT_HOST"),
+  port     = Sys.getenv("REDSHIFT_PORT"),
+  user     = Sys.getenv("REDSHIFT_USER"),
+  password = Sys.getenv("REDSHIFT_PASSWORD")
+)
 
 # ------------------------------------------------------------
 # Pull constituent feedback submissions
