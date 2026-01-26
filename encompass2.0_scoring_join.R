@@ -1,0 +1,47 @@
+# Set working directory
+setwd("/Users/natalievolin/Library/CloudStorage/GoogleDrive-nvolin@charitynavigator.org/Shared drives/Encompass Rating /Beacon | Impact & Measurement/2 | Ratings/2.1 | Ratings Production/R code for ratings production/4. Other R code/Encompass2.0_scoring")
+
+# Load required libraries
+library(tidyr)
+library(readr)
+library(RPostgres)
+library(DBI)
+library(dplyr)
+
+# Connect to the prod database
+con <- dbConnect(
+  RPostgres::Postgres(),
+  dbname   = Sys.getenv("Postgresql_DBNAME"),
+  host     = Sys.getenv("Postgresql_HOST"),
+  port     = Sys.getenv("Postgresql_PORT"),
+  user     = Sys.getenv("Postgresql_USER"),
+  password = Sys.getenv("Postgresql_PASSWORD")
+)
+query <- "
+  SELECT ein_rollup, encompass_version, encompass_score_total,
+         fa_score_total_display, ir_score_total_display, cc_score_total_display, la_score_total_display,
+         fa_pass, ir_pass, cc_pass, la_pass,
+         fa_fully_eligible, ir_fully_eligible, cc_fully_eligible, la_fully_eligible,
+         rating_size, is_noncash, is_museum, is_grant_making, is_donor_supported,
+         encompass_star_rating, summarycytotalrevenueamt
+  FROM public.v_encompass_v28_publish
+  WHERE encompass_eligible = 'true' AND COALESCE(fullyearsequence, -1) < 2;
+"
+encompass <- dbGetQuery(con, query)
+
+
+
+library(dplyr)
+
+encompass_joined <- encompass %>%
+  left_join(wpp_scores,        by = c("ein_rollup" = "ein")) %>%
+  left_join(leadership_scores, by = c("ein_rollup" = "ein")) %>%
+  left_join(measurement_scores,by = c("ein_rollup" = "ein")) %>%
+  left_join(learning_scores,         by = c("ein_rollup" = "ein"))
+
+
+
+write.csv(leadership_cleaned, file = "leadership_cleaned_5jan2026.csv", row.names = FALSE)
+
+
+
