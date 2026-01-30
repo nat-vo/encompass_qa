@@ -78,8 +78,19 @@ wpp_submissions <- wpp_submissions %>%
     )
   )
 
+wpp_scores <- wpp_submissions %>%
+  select(
+    ein,
+    is_eligible_workplace_policies,
+    workplace_policies_score,
+    is_eligible_promotional_pay_policy,
+    promotional_pay_policy_score,
+    is_eligible_reviewed_compensation_structure,
+    reviewed_compensation_structure_score,
+    is_eligible_hiring_employee_performance_practices,
+    hiring_employee_performance_practices_score
+  )
 
-library(dplyr)
 
 # Compute averages for your new variables
 averages <- wpp_submissions %>%
@@ -99,19 +110,5 @@ averages
 
 write.csv(wpp_submissions, "wpp_submissions_clean.csv", row.names = FALSE)
 
-wpp_scores <- wpp_submissions %>%
-rename(ein_rollup = ein) %>%
-  mutate(ein_rollup = as.integer(ein_rollup)) %>%
-  select(
-    ein_rollup,
-    is_eligible_workplace_policies,
-    workplace_policies_score,
-    is_eligible_promotional_pay_policy,
-    promotional_pay_policy_score,
-    is_eligible_reviewed_compensation_structure,
-    reviewed_compensation_structure_score,
-    is_eligible_hiring_employee_performance_practices,
-    hiring_employee_performance_practices_score
-  )
 
 

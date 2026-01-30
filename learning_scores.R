@@ -6,8 +6,15 @@ library(readr)
 # ------------------------------------------------------------------
 learning_scores <- read_csv("mo_coded_2026-01-12.csv") %>%
   mutate(
-    ein_rollup = as.integer(ein),
-    
+    ein = as.character(ein),
+    submitted_at = as.POSIXct(submitted_at)  # make sure it's a proper datetime
+  ) %>%
+  group_by(ein) %>%
+  slice_max(submitted_at, n = 1, with_ties = FALSE) %>%  # keep the latest row per EIN
+  ungroup()
+
+learning_scores <- learning_scores %>%
+  mutate(
     # =============================================================
     # Leadership Commitment to Monitoring and Evaluation (all sizes)
     # =============================================================
@@ -55,7 +62,7 @@ learning_scores <- read_csv("mo_coded_2026-01-12.csv") %>%
   ) %>%
   # Keep only the new variables
   select(
-    ein_rollup,
+    ein,
     is_eligible_leadership_commitment,
     leadership_commitment_score,
     is_eligible_report_to_stakeholders,
@@ -66,6 +73,5 @@ learning_scores <- read_csv("mo_coded_2026-01-12.csv") %>%
     use_results_score
   )
 
-
 # Full join learning_scores and cf_scores by ein_rollup
-learning_scores <- full_join(learning_scores, cf_scores, by = "ein_rollup")
+learning_scores <- full_join(learning_scores, cf_scores, by = "ein")

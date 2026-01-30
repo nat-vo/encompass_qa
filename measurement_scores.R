@@ -4,6 +4,15 @@ library(readr)
 # Load data and create scores
 measurement_scores <- read_csv("mo_coded_2026-01-12.csv") %>%
   mutate(
+    ein = as.character(ein),
+    submitted_at = as.POSIXct(submitted_at)  # make sure it's a proper datetime
+  ) %>%
+  group_by(ein) %>%
+  slice_max(submitted_at, n = 1, with_ties = FALSE) %>%  # keep the latest row per EIN
+  ungroup()
+
+measurement_scores <- measurement_scores %>%
+  mutate(
     # =============================================================
     # Invested in Monitoring and Evaluation Capacity (MEDIUM+)
     # =============================================================
@@ -132,6 +141,4 @@ measurement_scores <- read_csv("mo_coded_2026-01-12.csv") %>%
     program_lifecycle_data_score,
     is_eligible_analysis_practices,
     analysis_practices_score
-  ) %>%
-  rename(ein_rollup = ein) %>%
-  mutate(ein_rollup = as.integer(ein_rollup))
+  )

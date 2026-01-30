@@ -30,18 +30,55 @@ query <- "
 encompass <- dbGetQuery(con, query)
 
 
-
 library(dplyr)
 
 encompass_joined <- encompass %>%
+  # Join WPP scores
   left_join(wpp_scores,        by = c("ein_rollup" = "ein")) %>%
+  # Join Form 990 scores
+  left_join(form990_scores,    by = c("ein_rollup" = "ein_rollup")) %>%
+  # Join Leadership scores
   left_join(leadership_scores, by = c("ein_rollup" = "ein")) %>%
-  left_join(measurement_scores,by = c("ein_rollup" = "ein")) %>%
-  left_join(learning_scores,         by = c("ein_rollup" = "ein"))
+  # Join Program Planning scores
+  left_join(program_planning_scores, by = c("ein_rollup" = "ein")) %>%
+  # Join Measurement scores
+  left_join(measurement_scores, by = c("ein_rollup" = "ein")) %>%
+  # Join Learning scores
+  left_join(learning_scores,   by = c("ein_rollup" = "ein"))
+
+# List column names that start with 'is_eligible' or end with '_score'
+eligible_and_score_cols <- encompass_joined %>%
+  select(
+    starts_with("is_eligible"),
+    ends_with("_score")
+  ) %>%
+  colnames()
+
+# Print
+eligible_and_score_cols
 
 
 
-write.csv(leadership_cleaned, file = "leadership_cleaned_5jan2026.csv", row.names = FALSE)
+
+
+encompass_joined <- encompass_joined %>%
+  rowwise() %>%
+  mutate(
+    encompass_score = sum(c_across(all_of(metrics_table$score_var)) *
+                            c_across(all_of(metrics_table$eligibility_var)) *
+                            metrics_table$weight,
+                          na.rm = TRUE) /
+      sum(c_across(all_of(metrics_table$eligibility_var)) *
+            metrics_table$weight, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+
+
+
+
+
+write.csv(encompass_joined, file = "encompass_joined.csv", row.names = FALSE)
 
 
 

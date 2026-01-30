@@ -4,13 +4,23 @@ library(readr)
 # ------------------------------------------------------------------
 # Load data and compute Program Planning scores
 # ------------------------------------------------------------------
+
 program_planning_scores <- read_csv("mo_coded_2026-01-12.csv") %>%
+  mutate(
+    ein = as.character(ein),
+    submitted_at = as.POSIXct(submitted_at)  # make sure it's a proper datetime
+  ) %>%
+  group_by(ein) %>%
+  slice_max(submitted_at, n = 1, with_ties = FALSE) %>%  # keep the latest row per EIN
+  ungroup()
+
+program_planning_scores <- program_planning_scores %>%
   mutate(
     # =============================================================
     # Shared Understanding of Theory of Change (MICRO/SMALL)
     # =============================================================
     is_eligible_understand_toc = size %in% c("MICRO", "SMALL"),
-    plan_understand_toc_score = if_else(
+    understand_toc_score = if_else(
       is_eligible_understand_toc,
       case_when(
         plan_understand_toc_full == 1 ~ 1,
@@ -148,7 +158,7 @@ program_planning_scores <- read_csv("mo_coded_2026-01-12.csv") %>%
   select(
     ein,
     is_eligible_understand_toc,
-    plan_understand_toc_score,
+    understand_toc_score,
     is_eligible_toc_practices,
     toc_practices_score,
     is_eligible_me_practices,
@@ -157,6 +167,4 @@ program_planning_scores <- read_csv("mo_coded_2026-01-12.csv") %>%
     smartgoals_score,
     is_eligible_needs_assessment,
     needs_assessment_score
-  ) %>%
-  rename(ein_rollup = ein) %>%
-  mutate(ein_rollup = as.integer(ein_rollup))
+  )
