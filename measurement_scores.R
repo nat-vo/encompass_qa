@@ -73,58 +73,69 @@ measurement_scores <- measurement_scores %>%
     # =============================================================
     # Data Analysis Practices
     # =============================================================
-    is_eligible_analysis_practices = TRUE,
-    analysis_practices_score = case_when(
-      size %in% c("MICRO", "SMALL") ~ case_when(
-        collect_frequency_full == 1  ~ 1,
-        collect_frequency_partial == 1 ~ 0.5,
-        collect_frequency_none == 1 ~ 0,
-        TRUE ~ NA_real_
-      ),
-      size == "MEDIUM" ~ rowSums(
-        across(
-          c(
-            collect_analysis_sumstat,
-            collect_analysis_instit,
-            collect_analysis_cgroup,
-            collect_analysis_multiple,
-            collect_analysis_similar,
-            collect_analysis_samegeo
+      is_eligible_analysis_practices = TRUE,
+      
+      analysis_practices_score = pmin(
+        case_when(
+          size %in% c("MICRO", "SMALL") ~ case_when(
+            collect_frequency_full    == 1 ~ 1,
+            collect_frequency_partial == 1 ~ 0.5,
+            collect_frequency_none    == 1 ~ 0,
+            TRUE                            ~ NA_real_
           ),
-          ~ as.numeric(.x)
+          
+          size == "MEDIUM" ~
+            rowSums(
+              across(
+                c(
+                  collect_analysis_sumstat,
+                  collect_analysis_instit,
+                  collect_analysis_cgroup,
+                  collect_analysis_multiple,
+                  collect_analysis_similar,
+                  collect_analysis_samegeo
+                ),
+                ~ as.numeric(.x)
+              ),
+              na.rm = TRUE
+            ) / 4,
+          
+          size == "LARGE" ~
+            rowSums(
+              across(
+                c(
+                  collect_analysis_sumstat,
+                  collect_analysis_instit,
+                  collect_analysis_cgroup,
+                  collect_analysis_multiple,
+                  collect_analysis_similar,
+                  collect_analysis_samegeo
+                ),
+                ~ as.numeric(.x)
+              ),
+              na.rm = TRUE
+            ) / 5,
+          
+          size == "SUPER" ~
+            rowSums(
+              across(
+                c(
+                  collect_analysis_sumstat,
+                  collect_analysis_instit,
+                  collect_analysis_cgroup,
+                  collect_analysis_multiple,
+                  collect_analysis_similar,
+                  collect_analysis_samegeo
+                ),
+                ~ as.numeric(.x)
+              ),
+              na.rm = TRUE
+            ) / 6,
+          
+          TRUE ~ NA_real_
         ),
-        na.rm = TRUE
-      ) / 4,
-      size == "LARGE" ~ rowSums(
-        across(
-          c(
-            collect_analysis_sumstat,
-            collect_analysis_instit,
-            collect_analysis_cgroup,
-            collect_analysis_multiple,
-            collect_analysis_similar,
-            collect_analysis_samegeo
-          ),
-          ~ as.numeric(.x)
-        ),
-        na.rm = TRUE
-      ) / 5,
-      size == "SUPER" ~ rowSums(
-        across(
-          c(
-            collect_analysis_sumstat,
-            collect_analysis_instit,
-            collect_analysis_cgroup,
-            collect_analysis_multiple,
-            collect_analysis_similar,
-            collect_analysis_samegeo
-          ),
-          ~ as.numeric(.x)
-        ),
-        na.rm = TRUE
-      ) / 6,
-      TRUE ~ NA_real_
-    )
+        1
+      )
   ) %>%
   # Keep only the new variables
   select(

@@ -99,10 +99,14 @@ WHERE fa_fully_eligible = 'true'
 
 form990_metrics <- dbGetQuery(con, query)
 
+# Join fringe rate
+form990_scores <- form990_metrics %>%
+  left_join(fringe_rate,        by = c("ein_rollup" = "ein"))
+
 # ------------------------------------------------------------
 # Compute scores
 # ------------------------------------------------------------
-form990_scores <- form990_metrics %>%
+form990_scores <- form990_scores %>%
   mutate(
     
     # ------------------------------------------------------------
@@ -121,9 +125,14 @@ form990_scores <- form990_metrics %>%
     # Accountability Metrics
     # ------------------------------------------------------------
     url_on_990_score         = if_else(is_eligible_url_on_990, as.numeric(has_url_on_990), NA_real_),
+    
     material_diversion_score = if_else(
       is_eligible_material_diversion,
-      as.numeric(has_material_diversion),
+      case_when(
+        has_material_diversion == FALSE ~ 1,
+        has_material_diversion == TRUE  ~ 0,
+        TRUE                                ~ NA_real_
+      ),
       NA_real_
     ),
     
@@ -151,7 +160,11 @@ form990_scores <- form990_metrics %>%
     
     loans_to_from_officers_score = if_else(
       is_eligible_loans_to_from_officers,
-      as.numeric(has_loans_to_from_officers),
+      case_when(
+        has_loans_to_from_officers == FALSE ~ 1,
+        has_loans_to_from_officers == TRUE  ~ 0,
+        TRUE                                ~ NA_real_
+      ),
       NA_real_
     ),
     
@@ -170,28 +183,32 @@ form990_scores <- form990_metrics %>%
     # ------------------------------------------------------------
     # Website Disclosures
     # ------------------------------------------------------------
-    is_eligible_web_disclosure = case_when(
-      rating_size == "SUPER" & is_donor_supported ~ TRUE,
-      TRUE ~ FALSE
-    ),
-    
-    donor_privacy_subscore = case_when(
-      has_donor_privacy_policy == "yes"      ~ 0.13334,
-      has_donor_privacy_policy == "opt-out"  ~ 0.06667,
-      TRUE                                   ~ 0
-    ),
-    
-    audit_online_subscore     = if_else(has_audit_on_website, 0.33334, 0),
-    board_online_subscore     = if_else(has_board_on_website, 0.33334, 0),
-    key_staff_online_subscore = if_else(has_key_staff_on_website, 0.2, 0),
-    
-    web_disclosure_score = pmin(
-      donor_privacy_subscore +
-        audit_online_subscore +
-        board_online_subscore +
-        key_staff_online_subscore,
-      1
-    ),
+      is_eligible_web_disclosure = case_when(
+        rating_size == "SUPER" & is_donor_supported ~ TRUE,
+        TRUE                                       ~ FALSE
+      ),
+      
+      donor_privacy_subscore = case_when(
+        has_donor_privacy_policy == "yes"      ~ 0.13334,
+        has_donor_privacy_policy == "opt-out"  ~ 0.06667,
+        TRUE                                   ~ 0
+      ),
+      
+      audit_online_subscore     = if_else(has_audit_on_website, 0.33334, 0),
+      board_online_subscore     = if_else(has_board_on_website, 0.33334, 0),
+      key_staff_online_subscore = if_else(has_key_staff_on_website, 0.2, 0),
+      
+      web_disclosure_score = if_else(
+        is_eligible_web_disclosure,
+        pmin(
+          donor_privacy_subscore +
+            audit_online_subscore +
+            board_online_subscore +
+            key_staff_online_subscore,
+          1
+        ),
+        NA_real_
+      ),
     
     # ------------------------------------------------------------
     # Compensation Metrics
@@ -257,17 +274,28 @@ form990_scores <- form990_metrics %>%
     ),
 
     is_eligible_fringe_rate = case_when(
-      rating_size %in% c("SMALL", "MEDIUM", "LARGE", "SUPER"), & is_donor_supported ~ TRUE,
+      rating_size %in% c("MEDIUM", "LARGE", "SUPER") & is_donor_supported ~ TRUE,
       TRUE ~ FALSE
     ),
 
-    fringe_rate_score = if_else(
-      is_eligible_fringe_rate,
-      as.numeric(has_990_board_provided),
-      NA_real_
-    ),
-
-
+    fringe_rate_score = case_when(
+      !is_eligible_fringe_rate ~ NA_real_,
+      
+      rating_size == "MEDIUM" &
+        fringe_benefits_rate >= .13 &
+        fringe_benefits_rate <= .28 ~ 1,
+      
+      rating_size == "LARGE" &
+        fringe_benefits_rate >= .17 &
+        fringe_benefits_rate <= .32 ~ 1,
+      
+      rating_size == "SUPER" &
+        fringe_benefits_rate >= .19 &
+        fringe_benefits_rate <= .33 ~ 1,
+      
+      TRUE ~ 0
+    )
+  )
 
 # Keep only eligibility flags and all score variables
 form990_scores <- form990_scores %>%
